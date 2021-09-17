@@ -1,0 +1,37 @@
+{
+    "attachments": [
+        {
+            "content": "<<CONTENT_PLACEHOLDER>>",
+            "filename": "data.geojson",
+            "type": "application/json"
+        }
+    ],
+    "content": [
+        {
+            "type": "text/html",
+            "value": "<p>A new *.geojson file has been received.</p>"
+        }
+    ],
+    "from": {
+        "email": "info@hotosm.org",
+        "name": "Azure HOT Inbound Workflow"
+    },
+    "reply_to": {
+        "email": "noreply@hotosm.org"
+    },
+    "personalizations": [
+        {
+            "subject": "New *.geojson File Received",
+            "to": [
+                {
+                    "email": "recipient@a_domain.tld"
+                }
+            ],
+            "cc": [
+                {
+                    "email": "cc_recipient@a_domain.tld"
+                }
+            ]
+        }
+    ]
+}

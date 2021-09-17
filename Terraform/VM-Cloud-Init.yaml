@@ -1,0 +1,273 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+apt:
+  sources:
+    docker.list:
+      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
+      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+# https://wiki.ubuntu.com/FocalFossa/ReleaseNotes#Python3_by_default
+packages:
+  - nfs-common
+  - nginx
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose
+  - certbot
+  - python3-certbot-nginx
+  - npm
+  - postgresql-client
+
+write_files:
+  - owner: root:root
+    path: /etc/nginx/api_keys.conf
+    content: |
+      map $http_apikey $api_client_name {
+          # Use the following command to generate new random keys:
+          # openssl rand -base64 32
+          # Series of "key" "entity" lines:
+          default "";
+          "${nginx_api_key}" "API";
+      }
+
+  - owner: root:root
+    path: /etc/nginx/conf.d/${domain_name}.conf
+    content: |
+      # Certbot will modify this file to redirect to, and listen on, port 443.
+      include api_keys.conf;
+
+      # TODO-OSM3 Enable when OSM-Seed is Deployed.
+      #server {
+      #    listen 8082;
+      #    listen [::]:8082;
+      #    server_name ${domain_name}
+      #                ${public_ip_address};
+      #
+      #    access_log /var/log/nginx/${domain_name}.osm.access.log;
+      #
+      #    location = / {
+      #        proxy_pass http://127.0.0.1:8082;
+      #    }
+      #}
+
+      server {
+          listen 80;
+          listen [::]:80;
+          server_name ${domain_name}
+                      ${public_ip_address};
+
+          access_log /var/log/nginx/${domain_name}.access.log;
+
+          # RapiD Editor
+          location = / {
+              proxy_pass http://127.0.0.1:8080;
+          }
+
+          location = /api/inbound {
+              auth_request /_validate_apikey;
+              set $args $args&${la_inbound_trigger_query_string};
+              proxy_pass ${la_inbound_trigger_url};
+          }
+
+          location = /api/outbound {
+              auth_request /_validate_apikey;
+              set $args $args&${la_outbound_trigger_query_string};
+              proxy_pass ${la_outbound_trigger_url};
+          }
+
+          # API key validation
+          location /_validate_apikey {
+              internal;
+              
+              if ($http_apikey = "") {
+                  return 401; # Unauthorized
+              }
+            
+              if ($api_client_name = "") {
+                  return 403; # Forbidden
+              }
+
+              return 204; # OK (No Content)
+          }
+      }
+
+  # CRON definition - Daily / monthly / yearly database backup.
+  - owner: root:root
+    path: /etc/cron.d/database_backup
+    permissions: '0770'
+    content: |
+      0 2 2-31 * * root /root/scripts/db_backup.sh /mnt/storagebackup/daily >> /var/log/hot/cron_database_backup.log 2>&1
+      0 2 1 2-12 * root /root/scripts/db_backup.sh /mnt/storagebackup/monthly >> /var/log/hot/cron_database_backup.log 2>&1
+      0 2 1 1 * root /root/scripts/db_backup.sh /mnt/storagebackup/yearly >> /var/log/hot/cron_database_backup.log 2>&1
+    
+  # PostgreSQL .pgpass file.
+  - owner: root:root
+    path: /root/.pgpass
+    content: localhost:5432:*:${postgres_user_name}:${postgres_password}
+    permissions: '0600'
+
+  # Add Dockerfile for RapiD Editor.
+  - owner: root:root
+    path: /root/RapiD_Temp/Dockerfile
+    content: |
+      # syntax=docker/dockerfile:1
+      FROM node:16
+      WORKDIR /usr/src/RapiD
+      COPY package*.json ./
+      RUN npm install
+      COPY . .
+      CMD [ "node", "scripts/server.js" ]
+
+  - owner: root:root
+    path: /root/RapiD_Temp/.dockerignore
+    content: |
+      node_modules
+      npm-debug.log
+
+  # TODO-OSM1 Update with full OSM-Seed environment file or, if OSM-Seed is
+  # being installed manually, remove this file from the automated setup.
+  - owner: root:root
+    path: /root/OSM-Seed_Temp/.env
+    content: |
+      POSTGRES_HOST=db
+      POSTGRES_DB=openstreetmap
+      POSTGRES_USER=${postgres_user_name}
+      POSTGRES_PASSWORD=${postgres_password}
+
+  - owner: root:root
+    path: /root/scripts/db_backup.sh
+    permissions: '0770'
+    content: |
+      #!/bin/bash
+
+      # Credentials stored in ~/.pgpass file
+      # host:port:database:username:password
+
+      # Command line arguments.
+      BACKUP_ROOT_DIR=$arg1
+
+      # Local variables.
+      HOSTNAME="localhost"
+      USERNAME="${postgres_user_name}"
+
+      # Create backup sub directory.
+      printf -v DATE_STRING '%(%Y-%m-%d_%H-%M-%S)T' -1
+      echo "[INFO] Making backup directory $DATE_STRING in $BACKUP_ROOT_DIR"
+      BACKUP_DIR="$BACKUP_ROOT_DIR/$DATE_STRING"
+      if ! mkdir -p $BACKUP_DIR; then
+        echo "[ERROR] Cannot create backup directory in $BACKUP_ROOT_DIR." 1>&2
+        exit 1;
+      fi;
+
+      # Backup
+      DATABASES_QUERY="select datname from pg_database where not datistemplate and datallowconn order by datname;"
+
+      for DATABASE in `psql -h "$HOSTNAME" -U "$USERNAME" -At -c "$DATABASES_QUERY" postgres`
+      do
+          DATABASE_PATH_NAME="$BACKUP_DIR/$DATABASE.sql.gz"
+
+          set -o pipefail
+          echo "Creating in_progress backup file."
+          if ! pg_dump -Fp -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip > "$DATABASE_PATH_NAME.in_progress"; then
+              echo "[ERROR] Failed to produce backup for database $DATABASE" 1>&2
+          else
+              echo "[INFO] Renaming backup file."
+              mv "$DATABASE_PATH_NAME.in_progress" $DATABASE_PATH_NAME
+          fi
+          set +o pipefail
+      done
+
+      echo -e "[INFO] Backups complete."
+
+runcmd:
+  # Add hotadmin user to hotusers group.
+  - sudo groupadd hotusers
+  - sudo usermod -a -G hotusers ${vm_admin_username}
+
+  # Create the log directory
+  - echo "Creating the /var/log/hot directory."
+  - sudo mkdir /var/log/hot
+  - sudo chown ${vm_admin_username}:hotusers /var/log/hot
+  - sudo chmod 774 /var/log/hot
+
+  # Mount the data drive.
+  # https://docs.microsoft.com/en-us/azure/virtual-machines/linux/add-disk
+  # Check if the /dev/sdc1 device is already present
+  # (e.g. VM resize using Terraform - data disk won't be destroyed / created).
+  - |
+    if (lsblk -o NAME | grep -i "sdc1" > /dev/null)
+    then
+      echo "/dev/sdc1 already exists."
+    else
+      echo "/dev/sdc1 does not exist. Partitioning and formatting /dev/sdc."
+      sudo parted /dev/sdc --script mklabel gpt mkpart xfspart xfs 0% 100%
+      sudo mkfs.xfs /dev/sdc1
+    fi
+  - sudo partprobe /dev/sdc1
+  - sudo mkdir /datadrive
+  - sudo mount /dev/sdc1 /datadrive
+  # Persist the mount for reboots (Add the drive to fstab).
+  - UUID=$(blkid -s UUID -o value /dev/sdc1)
+  - sudo echo "UUID=$UUID   /datadrive   xfs   defaults,nofail   1   2" >> /etc/fstab
+
+  # Mount the Azure Storage Account 'storageinbound'.
+  - echo "Mounting the Azure Storage Account for the inbound workflow."
+  # Create the local directory and mount it.
+  - sudo mkdir /mnt/storageinbound
+  # Mount the storage account.
+  - sudo mount -o sec=sys,vers=3,nolock,proto=tcp "${sa_inbound}.blob.core.windows.net:/${sa_inbound}/default" "/mnt/storageinbound"
+  - sudo chmod 770 /mnt/storageinbound
+
+  # Mount the Azure Storage Account 'storageoutbound'.
+  - echo "Mounting the Azure Storage Account for the outbound workflow."
+  # Create the local directory and mount it.
+  - sudo mkdir /mnt/storageoutbound
+  # Mount the storage account.
+  - sudo mount -o sec=sys,vers=3,nolock,proto=tcp "${sa_outbound}.blob.core.windows.net:/${sa_outbound}/default" "/mnt/storageoutbound"
+  - sudo chmod 770 /mnt/storageoutbound  
+
+  # Mount the Azure Storage Account 'storagebackup'.
+  - echo "Mounting the Azure Storage Account for the backup workflow."
+  # Create the local directory and mount it.
+  - sudo mkdir /mnt/storagebackup
+  # Mount the storage account.
+  - sudo mount -o sec=sys,vers=3,nolock,proto=tcp "${sa_backup}.blob.core.windows.net:/${sa_backup}/default" "/mnt/storagebackup"
+  - sudo chmod 770 /mnt/storagebackup
+
+  # Create the subdirectories for the CRON backups.
+  - sudo mkdir /mnt/storagebackup/daily
+  - sudo mkdir /mnt/storagebackup/monthly
+  - sudo mkdir /mnt/storagebackup/yearly
+
+  # NGINX
+  # (Run Certbot manually once the public ip address has been assigned and a new
+  # DNS subdomain A record has been assigned to the ip address in the hotosm.org domain).
+  - rm /etc/nginx/sites-enabled/default
+  - service nginx restart
+
+  # OSM-Seed
+  # TODO-OSM2 Remove / refactor to include all OSM-Seed containers (only building the database container now to enable testing of the outbound workflow).
+  - echo "Cloning OSM-Seed into ~/OSM-Seed."
+  - sudo git clone https://github.com/developmentseed/osm-seed.git /root/OSM-Seed
+  - cp /root/OSM-Seed_Temp/.env /root/OSM-Seed
+  - rm -rf /root/OSM-Seed_Temp
+  - cd /root/OSM-Seed/images/db
+  - docker network create osm-seed_default
+  - docker build -t osmseed-db:v1 .
+  - docker run -d --env-file ./../../.env --network osm-seed_default --name db -v $(pwd)/../postgres-data:/var/lib/postgresql/data -p "5432:5432" -t osmseed-db:v1
+
+  # Build and run RapiD Docker container.
+  - sudo git clone https://github.com/facebookincubator/RapiD.git /root/RapiD
+  # Copy the Dockerfile and .dockerignore files
+  - cp /root/RapiD_Temp/* /root/RapiD
+  - rm -rf /root/RapiD_Temp
+  - cd /root/RapiD
+  # Checkout at a specific tag.
+  - sudo git checkout tags/rapid-v1.1.6
+  # Build
+  - sudo docker build --tag hot-rapid .
+  # Run the RapiD Editor container in detached mode.
+  - sudo docker run -p 8080:8080 -d hot-rapid

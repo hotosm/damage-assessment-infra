@@ -1,0 +1,467 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "SubscriptionId": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "[subscription().subscriptionId]"
+    },
+    "ResourceGroupName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "[resourceGroup().name]"
+    },
+    "LogicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "la-hot-weu-dev-outbound"
+    },
+    "StorageAccountConfigurationName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "VmName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "BackupScriptPathFileName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "BackupRootDirectory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "AllowedCallerIpAddresses": {
+      "type": "string",
+      "minLength": 1
+    },
+    "KeyVaultName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SendGridApiSecretName": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Response_-_OK_No_Content": {
+              "inputs": {
+                "statusCode": 204
+              },
+              "kind": "Http",
+              "runAfter": {
+                "Scope_-_Process": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Response"
+            },
+            "Response_-_Internal_Server_Error": {
+              "inputs": {
+                "statusCode": 500
+              },
+              "kind": "Http",
+              "runAfter": {
+                "Scope_-_Process": [
+                  "Failed",
+                  "TIMEDOUT"
+                ]
+              },
+              "type": "Response"
+            },
+            "Scope_-_Process": {
+              "actions": {
+                "HTTP_GET_-_SendGrid_Body": {
+                  "inputs": {
+                    "authentication": {
+                      "audience": "https://storage.azure.com",
+                      "type": "ManagedServiceIdentity"
+                    },
+                    "headers": {
+                      "x-ms-blob-type": "BlockBlob",
+                      "x-ms-version": "2019-07-07"
+                    },
+                    "method": "GET",
+                    "uri": "https://@{parameters('storageAccountConfigurationName')}.blob.core.windows.net/default/config.logicapps.sendgridtemplate.outbound.json"
+                  },
+                  "runAfter": {},
+                  "type": "Http"
+                },
+                "Parse_JSON_-_Validate_SendGrid_Body": {
+                  "inputs": {
+                    "content": "@body('HTTP_GET_-_SendGrid_Body')",
+                    "schema": {
+                      "properties": {
+                        "attachments": {
+                          "items": {
+                            "properties": {
+                              "content": {
+                                "type": "string"
+                              },
+                              "filename": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "content",
+                              "filename",
+                              "type"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "content": {
+                          "items": {
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "from": {
+                          "properties": {
+                            "email": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "email"
+                          ],
+                          "type": "object"
+                        },
+                        "personalizations": {
+                          "items": {
+                            "properties": {
+                              "cc": {
+                                "items": {
+                                  "properties": {
+                                    "email": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "email"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "subject": {
+                                "type": "string"
+                              },
+                              "to": {
+                                "items": {
+                                  "properties": {
+                                    "email": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "email"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "required": [
+                              "subject",
+                              "to"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "reply_to": {
+                          "properties": {
+                            "email": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "email"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "runAfter": {
+                    "HTTP_GET_-_SendGrid_Body": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "ParseJson"
+                },
+                "HTTP_-_Get_SendGrid_API_Key": {
+                  "inputs": {
+                    "authentication": {
+                      "audience": "https://vault.azure.net",
+                      "type": "ManagedServiceIdentity"
+                    },
+                    "method": "GET",
+                    "uri": "https://@{parameters('keyVaultName')}.vault.azure.net/secrets/@{parameters('sendGridApiSecretName')}?api-version=7.2"
+                  },
+                  "runAfter": {
+                    "Parse_JSON_-_Validate_SendGrid_Body": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "secureData": {
+                      "properties": [
+                        "outputs"
+                      ]
+                    }
+                  },
+                  "type": "Http"
+                },
+                "Parse_JSON_-_Send_Grid_API_Key": {
+                  "inputs": {
+                    "content": "@body('HTTP_-_Get_SendGrid_API_Key')",
+                    "schema": {
+                      "properties": {
+                        "attributes": {
+                          "properties": {
+                            "created": {
+                              "type": "integer"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "recoveryLevel": {
+                              "type": "string"
+                            },
+                            "updated": {
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "runAfter": {
+                    "HTTP_-_Get_SendGrid_API_Key": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "secureData": {
+                      "properties": [
+                        "inputs"
+                      ]
+                    }
+                  },
+                  "type": "ParseJson"
+                },
+                "HTTP_POST_-_Trigger_Backup": {
+                  "inputs": {
+                    "authentication": {
+                      "audience": "https://management.azure.com",
+                      "type": "ManagedServiceIdentity"
+                    },
+                    "body": {
+                      "commandId": "RunShellScript",
+                      "parameters": [
+                        {
+                          "name": "arg1",
+                          "value": "@parameters('backupRootDirectory')"
+                        }
+                      ],
+                      "script": [
+                        "@parameters('backupScriptPathFileName')"
+                      ]
+                    },
+                    "method": "POST",
+                    "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.Compute/virtualMachines/@{parameters('vmName')}/runCommand?api-version=2021-07-01"
+                  },
+                  "runAfter": {
+                    "Parse_JSON_-_Send_Grid_API_Key": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Http"
+                },
+                "HTTP_POST_SendGrid_EMail": {
+                  "inputs": {
+                    "body": "@body('HTTP_GET_-_SendGrid_Body')",
+                    "headers": {
+                      "Authorization": "Bearer @{body('Parse_JSON_-_Send_Grid_API_Key')?['value']}",
+                      "Content-Type": "application/json"
+                    },
+                    "method": "POST",
+                    "uri": "https://api.sendgrid.com/v3/mail/send"
+                  },
+                  "runAfter": {
+                    "HTTP_POST_-_Trigger_Backup": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "secureData": {
+                      "properties": [
+                        "inputs"
+                      ]
+                    }
+                  },
+                  "type": "Http"
+                }
+              },
+              "runAfter": {},
+              "type": "Scope"
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {},
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            },
+            "backupRootDirectory": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "backupScriptPathFileName": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "keyVaultName": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "resourceGroupName": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "sendGridApiSecretName": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "storageAccountConfigurationName": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "subscriptionId": {
+              "defaultValue": "",
+              "type": "String"
+            },
+            "vmName": {
+              "defaultValue": "",
+              "type": "String"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "inputs": {},
+              "kind": "Http",
+              "operationOptions": "SuppressWorkflowHeadersOnResponse",
+              "type": "Request"
+            }
+          }
+        },
+        "parameters": {
+          "subscriptionId": {
+            "value": "[parameters('SubscriptionId')]"
+          },
+          "resourceGroupName": {
+            "value": "[parameters('ResourceGroupName')]"
+          },
+          "vmName": {
+            "value": "[parameters('VmName')]"
+          },
+          "storageAccountConfigurationName": {
+            "value": "[parameters('StorageAccountConfigurationName')]"
+          },
+          "backupRootDirectory": {
+            "value": "[parameters('BackupRootDirectory')]"
+          },
+          "backupScriptPathFileName": {
+            "value": "[parameters('BackupScriptPathFileName')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('KeyVaultName')]"
+          },
+          "sendGridApiSecretName": {
+            "value": "[parameters('SendGridApiSecretName')]"
+          }
+        },
+        "accessControl": {
+          "triggers": {
+            "allowedCallerIpAddresses": [
+              {
+                "addressRange": "[parameters('AllowedCallerIpAddresses')]"
+              }
+            ]
+          }
+        }
+      },
+      "name": "[parameters('LogicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "apiVersion": "2017-07-01",
+      "dependsOn": []
+    }
+  ],
+  "outputs": {
+    "principalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Logic/workflows', parameters('LogicAppName')), '2019-05-01', 'Full').Identity.principalId]"
+    },
+    "triggerUrl": {
+      "type": "string",
+      "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('LogicAppName')), '/triggers/manual'), '2016-06-01').value]"
+    }
+  }
+}

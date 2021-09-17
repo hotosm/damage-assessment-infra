@@ -1,0 +1,30 @@
+{
+    "content": [
+        {
+            "type": "text/html",
+            "value": "<p>A new data backup is now available to be retrieved from the shared Azure storage account.</p>"
+        }
+    ],
+    "from": {
+        "email": "info@hotosm.org",
+        "name": "Azure HOT Outbound Workflow"
+    },
+    "reply_to": {
+        "email": "noreply@hotosm.org"
+    },
+    "personalizations": [
+        {
+            "subject": "HOT - New Data Backup Available",
+            "to": [
+                {
+                    "email": "recipient@a_domain.tld"
+                }
+            ],
+            "cc": [
+                {
+                    "email": "cc_recipient@a_domain.tld"
+                }
+            ]
+        }
+    ]
+}
