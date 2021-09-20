@@ -58,3 +58,23 @@ resource "azurerm_role_assignment" "laoutboundtosaoutbound" {
   role_definition_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}${data.azurerm_role_definition.storageblobcontributor.id}"
   principal_id       = azurerm_template_deployment.logicappoutbound.outputs["principalId"]
 }
+
+resource "azurerm_storage_management_policy" "outbound" {
+  storage_account_id = azurerm_storage_account.outbound.id
+
+  rule {
+    name    = "OutboundPolicy"
+    enabled = true
+    filters {
+      prefix_match = ["default"]
+      blob_types   = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        tier_to_cool_after_days_since_modification_greater_than    = 30
+        tier_to_archive_after_days_since_modification_greater_than = 90
+        delete_after_days_since_modification_greater_than          = 365
+      }
+    }
+  }
+}
