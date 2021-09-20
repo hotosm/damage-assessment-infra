@@ -1,6 +1,13 @@
 # Post Terraform Installation Steps
 
-## Requesting a SSL Certificate using Certbot
+## Configuration of SSL Certificate using Certbot
+
+Once the Terraform build has completed:
+- Obtain the VM's public IP address.
+- Add a new 'A' record in the HOT DNS account that links a subdomain 'dat' to the public IP address in Azure. For example 'dat.hotosm.org' > '111.222.333.444'.
+- Open port 80 on the Network Security Group to allow Certbot callbacks.
+
+### Requesting a SSL Certificate using Certbot
 
 Configure environment:
 
@@ -22,9 +29,3 @@ Testing a request of a certificate (use for development as requests don't count 
 ``` BASH
 sudo certbot --nginx -d $DOMAIN_NAME --email $EMAIL_ADDRESS_FOR_CERTBOT_NOTIFICATIONS --agree-tos --non-interactive --redirect --test-cert
 ```
-
-Restrict port 80 to specific addresses.
-
-## Add OperationalInsights Module and link VM for Update Management
-
-https://docs.microsoft.com/en-us/azure/automation/update-management/enable-from-runbook

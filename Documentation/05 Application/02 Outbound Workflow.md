@@ -23,9 +23,7 @@ The outbound storage account container can be accessed via the portal, the CLI o
 - Configure a user in the AD with the Azure 'Storage Blob Data Contributor' role.
 - Issue a time limited Shared Access Signature.
 
-### Obtaining a Shared Access Signature
-
-#### Portal
+### Obtaining a Shared Access Signature - Portal
 
 - Navigate to the `default` container in the outbound storage account.
 - Select the 'Shared access tokens' blade.
@@ -38,7 +36,7 @@ The outbound storage account container can be accessed via the portal, the CLI o
 
 If you need to revoke a Shared Access Signature then rotate the keys for the storage account. **Note: all current Shared Access Signatures based on the original key will become invalid.**
 
-#### Powershell
+### Obtaining a Shared Access Signature - Powershell
 
 Tokens issued using this method (OAuth authentication) are valid for a maximum windows of 7 days from the time they are created.
 
