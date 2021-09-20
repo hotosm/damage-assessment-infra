@@ -97,8 +97,11 @@ write_files:
   # CRON definition - Daily / monthly / yearly database backup.
   - owner: root:root
     path: /etc/cron.d/database_backup
-    permissions: '0770'
+    permissions: '0644'
     content: |
+      SHELL=/bin/sh
+      # Entry for testing:
+      # */5 * * * * root /root/scripts/db_backup.sh /mnt/storagebackup/daily >> /var/log/hot/cron_database_backup.log 2>&1
       0 2 2-31 * * root /root/scripts/db_backup.sh /mnt/storagebackup/daily >> /var/log/hot/cron_database_backup.log 2>&1
       0 2 1 2-12 * root /root/scripts/db_backup.sh /mnt/storagebackup/monthly >> /var/log/hot/cron_database_backup.log 2>&1
       0 2 1 1 * root /root/scripts/db_backup.sh /mnt/storagebackup/yearly >> /var/log/hot/cron_database_backup.log 2>&1
@@ -139,7 +142,7 @@ write_files:
 
   - owner: root:root
     path: /root/scripts/db_backup.sh
-    permissions: '0770'
+    permissions: '0750'
     content: |
       #!/bin/bash
 
@@ -147,7 +150,7 @@ write_files:
       # host:port:database:username:password
 
       # Command line arguments.
-      BACKUP_ROOT_DIR=$arg1
+      BACKUP_ROOT_DIR=$1
 
       # Local variables.
       HOSTNAME="localhost"
@@ -170,11 +173,11 @@ write_files:
           DATABASE_PATH_NAME="$BACKUP_DIR/$DATABASE.sql.gz"
 
           set -o pipefail
-          echo "Creating in_progress backup file."
+          echo "[INFO] Creating in_progress backup file '$DATABASE_PATH_NAME.in_progress'."
           if ! pg_dump -Fp -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" | gzip > "$DATABASE_PATH_NAME.in_progress"; then
               echo "[ERROR] Failed to produce backup for database $DATABASE" 1>&2
           else
-              echo "[INFO] Renaming backup file."
+              echo "[INFO] Renaming backup file from 'DATABASE_PATH_NAME.in_progress' to '$DATABASE_PATH_NAME'."
               mv "$DATABASE_PATH_NAME.in_progress" $DATABASE_PATH_NAME
           fi
           set +o pipefail
@@ -248,16 +251,16 @@ runcmd:
   - rm /etc/nginx/sites-enabled/default
   - service nginx restart
 
-  # OSM-Seed
-  # TODO-OSM2 Remove / refactor to include all OSM-Seed containers (only building the database container now to enable testing of the outbound workflow).
-  - echo "Cloning OSM-Seed into ~/OSM-Seed."
-  - sudo git clone https://github.com/developmentseed/osm-seed.git /root/OSM-Seed
-  - cp /root/OSM-Seed_Temp/.env /root/OSM-Seed
-  - rm -rf /root/OSM-Seed_Temp
-  - cd /root/OSM-Seed/images/db
-  - docker network create osm-seed_default
-  - docker build -t osmseed-db:v1 .
-  - docker run -d --env-file ./../../.env --network osm-seed_default --name db -v $(pwd)/../postgres-data:/var/lib/postgresql/data -p "5432:5432" -t osmseed-db:v1
+  # # OSM-Seed
+  # # TODO-OSM2 Remove / refactor to include all OSM-Seed containers (only building the database container now to enable testing of the outbound workflow).
+  # - echo "Cloning OSM-Seed into ~/OSM-Seed."
+  # - sudo git clone https://github.com/developmentseed/osm-seed.git /root/OSM-Seed
+  # - cp /root/OSM-Seed_Temp/.env /root/OSM-Seed
+  # - rm -rf /root/OSM-Seed_Temp
+  # - cd /root/OSM-Seed/images/db
+  # - docker network create osm-seed_default
+  # - docker build -t osmseed-db:v1 .
+  # - docker run -d --env-file ./../../.env --network osm-seed_default --name db -v $(pwd)/../postgres-data:/var/lib/postgresql/data -p "5432:5432" -t osmseed-db:v1
 
   # Build and run RapiD Docker container.
   - sudo git clone https://github.com/facebookincubator/RapiD.git /root/RapiD
