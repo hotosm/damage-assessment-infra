@@ -19,7 +19,8 @@
     ssh_keys = {
     "<SSH_KEY_NAME_1>" = "<SSH_KEY_VALUE_1>",
     "<SSH_KEY_NAME_2>" = "<SSH_KEY_VALUE_2>",
-    "<SSH_KEY_NAME_3>" = "<SSH_KEY_VALUE_3>",    }
+    "<SSH_KEY_NAME_3>" = "<SSH_KEY_VALUE_3>"
+    }
 
     sa_inbound_ip_rules = [
     "xxx.xxx.xxx.xxx",
@@ -75,9 +76,9 @@ Installation of the OSM-Seed database container has been added to this file to e
 
 ### Application Configuration Files
 
-The application configuration files are contained in the `/Configuration` directory. These files are copied to the configuration storage account. The Logic Apps for the inbound and outbound workflows read the configuration files each time they run.
+The application configuration files are contained in the `/Terraform/Configuration` directory. These files are copied to the configuration storage account. The Logic Apps for the inbound and outbound workflows read the configuration files each time they run.
 
-The configuration files for the inbound and outbound workflows are JSON documents describing the settings for the body of the SendGrid email service. Both configuration files should conform to the SendGrid email JSON schema - also saved in the `/Configuration` directory as `SendGridTemplateSchema.json`.
+The configuration files for the inbound and outbound workflows are JSON documents describing the settings for the body of the SendGrid email service. Both configuration files should conform to the SendGrid email JSON schema - also saved in the `/Terraform/Configuration` directory as `SendGridTemplateSchema.json`.
 
 Update these files as required. For example:
 - Set the email subject.

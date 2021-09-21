@@ -8,4 +8,4 @@ Soft delete protection for the VM backup has been disabled while developing / te
 
 ### Action
 
-Set the soft_delete_enabled property to true before deploying the solution to production.
+Set the soft_delete_enabled property to true before deploying the solution to the production environment.

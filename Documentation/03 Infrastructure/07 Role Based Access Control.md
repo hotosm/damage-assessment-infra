@@ -2,7 +2,7 @@
 
 ## AD Groups
 
-The following AD groups have been created in the organisations Tenant:
+The following AD groups have been created in the organisation's Tenant:
 
 |AD Group|Mapped to Equivalent Roles in Resource Group(s)*|
 |---|---|

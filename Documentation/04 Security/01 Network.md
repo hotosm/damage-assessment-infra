@@ -10,4 +10,4 @@ Note: Single IP addresses are referened with the Terraform property `source_addr
 
 ## Storage Accounts
 
-Storage accounts have their own network rules applied. See the Terraform for each storage account for details on the security configuration.
+Storage accounts have their own network rules applied. See the Terraform definition for each storage account for details on the security configuration.

@@ -8,7 +8,7 @@ For example, the configuration blob for the SendGrid template in the Inbound Wor
 
 The Azure Portal can be used to download / upload / edit blobs. Azure Storage Explorer can be used to download / upload blobs.
 
-When uploading a revised version of a configuration blob ensure that the file extension is set as `.json`. This will set the blob content type to `application/json`. If the blob content type isn't `application/json` then the configuration initialisation process will fail.
+When uploading any configuration blob(s) ensure that the file extension is set as `.json`. This will set the blob content type to `application/json`. If the blob content type isn't `application/json` then the configuration initialisation process will fail.
 
 ## Configuring the Outbound Storage Account for Access by the 510 Team
 

@@ -6,7 +6,7 @@ Process:
 - HTTP POST request triggers execution of the inbound Logic App:
   - POST `subdomain.hotosm.org/api/inbound`
   - Headers:
-    - apikey `<<Value stored in /etc/nginx/api_keys.conf>>`
+    - apikey `<Value stored in /etc/nginx/api_keys.conf>`
     - Content-Type application/json
   - Body:
     - GeoJSON document
@@ -21,12 +21,12 @@ Process:
   - Headers:
     - apikey `<<Value stored in /etc/nginx/api_keys.conf>>`
   - Body:
-    - None
-- Logic App executes an Azure VM Run Command which calls the backup script `/root/scripts/db_backup.sh` on the VM.
-- Backup script runs Postgres backup and saves the backup files in the outbound storage account `/mnt/storageoutbound`
+    - Empty
+- The logic App executes an Azure VM Run Command which calls the backup script `/root/scripts/db_backup_named_args.sh` on the VM.
+- The backup script runs Postgres backup and saves the backup files in the outbound storage account `/mnt/storageoutbound`
 - An email is sent to the recipients specified in the block blob `default/config.logicapps.sendgridtemplate.outbound.json` which is in the configuration storage account.
 
-## Process for Maintaining Logic Apps
+## Process for Updating Logic Apps
 
 Reference:
 
@@ -48,11 +48,11 @@ Azure Logic Apps Tools for Visual Studio
 1. Using Visual Studio, download the changes to a local VS resource group project.
 1. Save the local changes in a code repository.
 
-### Generate ARM Template - Option 1
+### Update Source Code - Option 1 (Generate ARM Template)
 
 Copy the template and parameter file (downloaded using Visual Studio in the previous section).
 
-### Generate ARM Template - Option 2
+### Update Source Code - Option 2 (Generate ARM Template using PowerShell)
 
 1. Install the LogicAppTemplate PowerShell module (**run as administrator**):
 
@@ -104,3 +104,10 @@ New-AzResourceGroupDeployment -Name 'DeploymentLogicAppInbound' `
   -TemplateFile 'C:\Path\la-hot-weu-dev-inbound.json' `
   -TemplateParameterFile 'C:\Path\la-hot-weu-dev-inbound.parameters.json'
 ```
+
+### Update Source Code - Option 3 (Manual Copy)
+
+1. Using the Azure Portal navigate to the 'Export Template' blade for the Logic App.
+1. Copy the `"resources" : [ ... ]` section from the JSON template.
+1. Overwrite the `"resources" : [ ... ]` section in the source code file.
+1. Update any parameters (if necessary).

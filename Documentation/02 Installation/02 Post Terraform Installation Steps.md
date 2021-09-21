@@ -20,7 +20,6 @@ Installation of the OMS Extension for update management on the Linux VM failed w
 
 ## Installing an SSL Certificate using Certbot
 
-Once the Terraform build has completed:
 - Obtain the VM's public IP address.
 - Add a new 'A' record in the HOT DNS account that links a `hotosm.org` subdomain to the public IP address in Azure. For example `dat.hotosm.org` > `111.222.333.444`.
 - Open port 80 on the Network Security Group to allow Certbot callbacks.

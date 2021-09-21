@@ -18,7 +18,7 @@ If a POST request is sent to the server over http then a returned status code of
 
 ## Testing
 
-Once Certbot has run the security of the site can be tested by navigating to the SSL Labs testing page, including the domain name to be tested as a query string parameter:
+Once Certbot has run, the security of the site can be tested by navigating to the SSL Labs testing page, including the domain name to be tested as a query string parameter:
 
 `https://www.ssllabs.com/ssltest/analyze.html?d=<DOMAIN_NAME>`
 

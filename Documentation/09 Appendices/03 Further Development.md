@@ -9,11 +9,6 @@ Update the `Cloud-Init.yaml` file with OSM-Seed build steps and configuration it
 ## Inbound Logic App
 
 - Dynamically load GeoJSON schema from configuration storage account / remove hard-coded schema in Logic App.
-- Dynamically load SendGrid email template schema (JSON) / remove hard-coded schema in Logic App.
-
-## Outbound Logic App
-
-- Dynamically load SendGrid email template schema (JSON) / remove hard-coded schema in Logic App.
 
 ## NGINX
 

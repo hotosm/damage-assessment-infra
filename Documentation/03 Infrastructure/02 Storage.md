@@ -8,7 +8,7 @@ https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-li
 
 ## Storage Accounts
 
-Four storage accounts are included in the default solution. Separate storage accounts are implemented to allow configuration of different permissions and storage lifecycle policies.
+Four storage accounts are included in the solution. Separate storage accounts are implemented to allow configuration of different permissions and storage lifecycle policies.
 
 - Backup (database backups)
 - Configuration (JSON configuration files used by the Logic Apps)

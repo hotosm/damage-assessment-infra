@@ -3,7 +3,7 @@
 ## Process
 
 - A member of the HOT makes an empty POST request to `https://<subdomain>.hotosm.org/api/outbound` with the header `apikey` set to the value of the key stored in the NGINX configuration file `/etc/nginx/api_keys.conf`.
-- The outbound Logic App initiates a Postgres backup (saved in the outbound storage account).
+- The outbound Logic App initiates a Postgres backup (which is saved in the outbound storage account).
 - The outbound Logic App sends an email to the recipients defined in the configuration file `config.logicapps.sendgridtemplate.outbound.json` (configuration storage account).
 - The 510 team connects to the outbound storage account and downloads the database backup file.
 
@@ -17,7 +17,7 @@ It is possible to pass a connection string in the format `postgresql://[user[:pa
 
 ## Retrieving Backups from the Outbound Storage Account
 
-User triggered database backups (https://<subdomain>.hotosm.org/api/outbound) are saved in the outbound storage account.
+User triggered database backups (https://\<subdomain\>.hotosm.org/api/outbound) are saved in the outbound storage account.
 
 The outbound storage account container can be accessed via the portal, the CLI or Azure Storage Explorer. To access the storage account container either:
 - Configure a user in the AD with the Azure 'Storage Blob Data Contributor' role.
@@ -38,7 +38,7 @@ If you need to revoke a Shared Access Signature then rotate the keys for the sto
 
 ### Obtaining a Shared Access Signature - Powershell
 
-Tokens issued using this method (OAuth authentication) are valid for a maximum windows of 7 days from the time they are created.
+Tokens issued using this method (OAuth authentication) are valid for a maximum window of 7 days from the time they are created.
 
 The account running the Powershell commands must have the 'Storage Blob Data Contributor' role and their IP address must be white listed in the storage account network configuration (if restricting access by IP).
 

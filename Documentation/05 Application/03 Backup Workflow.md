@@ -6,4 +6,4 @@ The script iterates through the Postgres databases in the OSM-Seed databases con
 
 The Postgres user name and password are configured in the `/root/.pgpass` file. This is defined in the file `VM-Cloud-Init.yaml` which is configured using Terraform variables.
 
-The database backup script adds log entries in the `/var/log/hot` directory.
+The database backup script logs output to a file in the `/var/log/hot` directory.
