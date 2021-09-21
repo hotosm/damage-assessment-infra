@@ -1,6 +1,6 @@
 # Appendix 2 - Known Issues
 
-## OMS Extension
+## VM OMS Extension
 
 Installation of the OMS Extension for update management on the Linux VM failed when attempted using Terraform, an ARM Template and in the portal.
 
@@ -51,3 +51,7 @@ Add to the resources[] array in the `LogAnalyticsWorkspaceAndAutomationAccount.j
 ### Next Steps
 
 Integrate the VM Extension into the ARM Template at a later date after it has been upgraded to use Python 3.
+
+## Tags on VM OS Disk
+
+It's not currently possible to assign tags to the OS disk of the Virtual Machine using Terraform. Please do this manually if required.
