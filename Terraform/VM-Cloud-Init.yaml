@@ -141,6 +141,18 @@ write_files:
       POSTGRES_PASSWORD=${postgres_password}
 
   - owner: root:root
+    path: /root/scripts/db_backup_named_args.sh
+    permissions: '0750'
+    content: |
+      #!/bin/bash
+
+      # Command line named arguments passed from Azure Logic App.
+      BACKUP_ROOT_DIR=$arg1
+
+      # Call the main backup script with a positional parameter.
+      bash /root/scripts/db_backup.sh $BACKUP_ROOT_DIR
+
+  - owner: root:root
     path: /root/scripts/db_backup.sh
     permissions: '0750'
     content: |
