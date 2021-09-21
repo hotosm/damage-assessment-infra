@@ -12,9 +12,9 @@ resource "azuread_group" "rg_app_owners" {
   display_name     = "AZGRP_RG_App_Owners"
   security_enabled = true
 
-#  owners = [
-#    data.azuread_client_config.current.object_id
-#  ]
+  #  owners = [
+  #    data.azuread_client_config.current.object_id
+  #  ]
 }
 
 resource "azurerm_role_assignment" "app_owners" {
