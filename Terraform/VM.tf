@@ -7,6 +7,7 @@ resource "azurerm_linux_virtual_machine" "app" {
   admin_username                  = var.vm_admin_username
   disable_password_authentication = true
   network_interface_ids           = [azurerm_network_interface.vm.id]
+  tags                            = var.tags
 
   identity {
     type = "SystemAssigned"
@@ -76,6 +77,7 @@ resource "azurerm_managed_disk" "vmdata" {
   storage_account_type = "StandardSSD_LRS"
   create_option        = "Empty"
   disk_size_gb         = 64
+  tags                 = var.tags
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "vmdata" {
@@ -95,6 +97,7 @@ resource "azurerm_recovery_services_vault" "main" {
   sku                 = "Standard"
   # TODO-SDE Set this to true for production deployment.
   soft_delete_enabled = false
+  tags                = var.tags
 }
 
 resource "azurerm_backup_policy_vm" "vm" {

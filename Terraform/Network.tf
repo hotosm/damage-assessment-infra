@@ -4,6 +4,7 @@ resource "azurerm_virtual_network" "main" {
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.network.location
   resource_group_name = azurerm_resource_group.network.name
+  tags                = var.tags
 }
 
 resource "azurerm_subnet" "main" {
@@ -20,12 +21,14 @@ resource "azurerm_public_ip" "pip" {
   resource_group_name = azurerm_resource_group.network.name
   location            = azurerm_resource_group.network.location
   allocation_method   = "Static"
+  tags                = var.tags
 }
 
 resource "azurerm_network_interface" "vm" {
   name                = "vm-${var.org_abb}-${var.reg_abb}-${var.env_abb}-01-nic-external"
   resource_group_name = azurerm_resource_group.network.name
   location            = azurerm_resource_group.network.location
+  tags                = var.tags
 
   ip_configuration {
     name                          = "public"
@@ -39,6 +42,7 @@ resource "azurerm_network_security_group" "subnet" {
   name                = "vm-${var.org_abb}-${var.reg_abb}-${var.env_abb}-01-nsg"
   resource_group_name = azurerm_resource_group.network.name
   location            = azurerm_resource_group.network.location
+  tags                = var.tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "main" {

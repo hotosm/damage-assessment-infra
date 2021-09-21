@@ -22,6 +22,7 @@ resource "azurerm_storage_account" "outbound" {
   nfsv3_enabled             = true
   shared_access_key_enabled = true
   account_replication_type  = "LRS"
+  tags                      = var.tags
 
   routing {
     choice = "MicrosoftRouting"

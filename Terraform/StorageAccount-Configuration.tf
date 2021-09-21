@@ -22,6 +22,7 @@ resource "azurerm_storage_account" "configuration" {
   nfsv3_enabled             = false
   shared_access_key_enabled = true
   account_replication_type  = "ZRS"
+  tags                      = var.tags
 
   network_rules {
     default_action             = "Deny"

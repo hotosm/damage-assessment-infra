@@ -44,6 +44,13 @@
     "SendGridApiSecretName": {
       "type": "string",
       "minLength": 1
+    },
+    "resourceTags": {
+        "type": "object",
+        "defaultValue": {
+            "Environment": "Development",
+            "Project": "DamageAssessment"
+        }
     }
   },
   "variables": {},
@@ -444,9 +451,7 @@
       "name": "[parameters('LogicAppName')]",
       "type": "Microsoft.Logic/workflows",
       "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "LogicApp"
-      },
+      "tags": "[parameters('resourceTags')]",
       "identity": {
         "type": "SystemAssigned"
       },

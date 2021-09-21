@@ -105,3 +105,14 @@ variable "domain_name" {
   default = ""
 }
 
+variable "tags" {
+  type = object({
+    Environment = string
+    Project     = string
+    }
+  )
+  default = {
+    "Environment" = "Development"
+    "Project"     = "DamageAssessment"
+  }
+}

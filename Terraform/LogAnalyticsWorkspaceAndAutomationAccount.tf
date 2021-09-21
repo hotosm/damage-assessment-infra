@@ -8,17 +8,24 @@ resource "azurerm_template_deployment" "law_and_aa" {
   resource_group_name = azurerm_resource_group.loganalytics.name
   deployment_mode     = "Incremental"
   template_body       = file("${path.module}/ArmTemplates/LogAnalyticsWorkspaceAndAutomationAccount.json")
-  parameters = {
-    workspaceName                = "law-${var.org_abb}-${var.reg_abb}-${var.env_abb}-01"
-    sku                          = "pergb2018"
-    dataRetention                = "30" # Terraform can't pass int so have to pass string then convert to int in the ARM template.
-    workspaceCappingDailyQuotaGb = "5"  # Terraform can't pass int so have to pass string then convert to int in the ARM template.
-    location                     = azurerm_resource_group.loganalytics.location
-    automationAccountName        = "aa-${var.org_abb}-${var.reg_abb}-${var.env_abb}-01"
-  }
+  parameters_body     = jsonencode(local.law_parameters_body)
   depends_on = [
     azurerm_linux_virtual_machine.app
   ]
+}
+
+# DataRetention, WorkspaceCappingDailyQuotaGb:
+# Terraform can't pass int so have to pass string then convert to int in the ARM template.
+locals {
+  law_parameters_body = {
+    workspaceName                = { value = "law-${var.org_abb}-${var.reg_abb}-${var.env_abb}-01" },
+    sku                          = { value = "pergb2018" },
+    dataRetention                = { value = "30" },
+    workspaceCappingDailyQuotaGb = { value = "5" },
+    location                     = { value = azurerm_resource_group.loganalytics.location },
+    automationAccountName        = { value = "aa-${var.org_abb}-${var.reg_abb}-${var.env_abb}-01" },
+    resourceTags                 = { value = var.tags }
+  }
 }
 
 # Terraform Option:

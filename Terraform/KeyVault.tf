@@ -21,6 +21,7 @@ resource "azurerm_key_vault" "main" {
   enable_rbac_authorization       = true
   sku_name                        = "standard"
   soft_delete_retention_days      = 7
+  tags                            = var.tags
 
   # NOTE: Azure Logic Apps (consumption) are not able to join the VNet (unless in an ISE). Security controlled by Azure RBAC.
   # network_acls {

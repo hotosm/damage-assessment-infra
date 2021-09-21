@@ -27,29 +27,35 @@ provider "azurerm" {
 resource "azurerm_resource_group" "app" {
   name     = "rg-${var.org_abb}-${var.reg_abb}-${var.env_abb}-app"
   location = var.region
+  tags     = var.tags
 }
 
 resource "azurerm_resource_group" "loganalytics" {
   name     = "rg-${var.org_abb}-${var.reg_abb}-${var.env_abb}-loganalytics"
   location = var.region
+  tags     = var.tags
 }
 
 resource "azurerm_resource_group" "network" {
   name     = "rg-${var.org_abb}-${var.reg_abb}-${var.env_abb}-network"
   location = var.region
+  tags     = var.tags
 }
 
 resource "azurerm_resource_group" "secrets" {
   name     = "rg-${var.org_abb}-${var.reg_abb}-${var.env_abb}-secrets"
   location = var.region
+  tags     = var.tags
 }
 
 resource "azurerm_resource_group" "sharedservices" {
   name     = "rg-${var.org_abb}-${var.reg_abb}-${var.env_abb}-sharedservices"
   location = var.region
+  tags     = var.tags
 }
 
 resource "azurerm_resource_group" "storage" {
   name     = "rg-${var.org_abb}-${var.reg_abb}-${var.env_abb}-storage"
   location = var.region
+  tags     = var.tags
 }
